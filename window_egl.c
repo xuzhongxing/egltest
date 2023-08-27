@@ -1,9 +1,3 @@
-/////////////////////
-// \author JackeyLea
-// \date 2023-04-15
-// \note 以EGL方式显示一个空白窗口
-/////////////////////
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,9 +12,80 @@ static struct wl_compositor *compositor = NULL;
 struct xdg_wm_base *xdg_shell = NULL;
 struct wl_region *region = NULL;
 struct wl_surface *surface = NULL;
+struct wl_seat *seat;
+struct wl_pointer *pointer;
+struct xdg_toplevel *toplevel;
 
 const int WIDTH = 480;
 const int HEIGHT = 360;
+
+static void
+pointer_handle_enter(void *data, struct wl_pointer *pointer,
+					 uint32_t serial, struct wl_surface *surface,
+					 wl_fixed_t sx, wl_fixed_t sy)
+{
+	fprintf(stderr, "Pointer entered surface %p at %f %f\n", surface, wl_fixed_to_double(sx), wl_fixed_to_double(sy));
+}
+
+static void
+pointer_handle_leave(void *data, struct wl_pointer *pointer,
+					 uint32_t serial, struct wl_surface *surface)
+{
+	fprintf(stderr, "Pointer left surface %p\n", surface);
+}
+
+static void
+pointer_handle_motion(void *data, struct wl_pointer *pointer,
+					  uint32_t time, wl_fixed_t sx, wl_fixed_t sy)
+{
+	printf("Pointer moved at %f %f\n", wl_fixed_to_double(sx), wl_fixed_to_double(sy));
+}
+
+static void
+pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
+					  uint32_t serial, uint32_t time, uint32_t button,
+					  uint32_t state)
+{
+	printf("Pointer button\n");
+	//if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED)
+	//	xdg_toplevel_move(toplevel, seat, serial);
+}
+
+static void
+pointer_handle_axis(void *data, struct wl_pointer *wl_pointer,
+					uint32_t time, uint32_t axis, wl_fixed_t value)
+{
+	printf("Pointer handle axis\n");
+}
+
+static const struct wl_pointer_listener pointer_listener = {
+	pointer_handle_enter,
+	pointer_handle_leave,
+	pointer_handle_motion,
+	pointer_handle_button,
+	pointer_handle_axis,
+};
+
+static void
+seat_handle_capabilities(void *data, struct wl_seat *seat,
+						 enum wl_seat_capability caps)
+{
+	if ((caps & WL_SEAT_CAPABILITY_POINTER) && !pointer)
+	{
+		pointer = wl_seat_get_pointer(seat);
+		wl_pointer_add_listener(pointer, &pointer_listener, NULL);
+	}
+	else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && pointer)
+	{
+		wl_pointer_destroy(pointer);
+		pointer = NULL;
+	}
+}
+
+static const struct wl_seat_listener seat_listener = {
+	seat_handle_capabilities,
+};
+
 
 static void handle_configure(void *data, struct xdg_surface *surface, uint32_t serial)
 {
@@ -43,6 +108,11 @@ global_registry_handler(void *data, struct wl_registry *registry,
 	{
 		xdg_shell = wl_registry_bind(registry, id, &xdg_wm_base_interface, version);
 	}
+	else if (strcmp(interface, "wl_seat") == 0)
+	{
+		seat = wl_registry_bind(registry, id, &wl_seat_interface, 1);
+		wl_seat_add_listener(seat, &seat_listener, NULL);
+	}
 }
 
 static void
@@ -59,7 +129,7 @@ static const struct wl_registry_listener registry_listener = {
 
 int main(int argc, char **argv)
 {
-	gl3wInit();
+	
 	fprintf(stderr, "XDG_RUNTIME_DIR= %s\n", getenv("XDG_RUNTIME_DIR"));
 
 	struct wl_display *display = display = wl_display_connect(NULL);
@@ -123,7 +193,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Created shell surface\n");
 	}
 	// 窗口处理
-	struct xdg_toplevel *toplevel = xdg_surface_get_toplevel(shell_surface);
+	toplevel = xdg_surface_get_toplevel(shell_surface);
 	xdg_surface_add_listener(shell_surface, &surface_listener, NULL);
 
 	region = wl_compositor_create_region(compositor);
@@ -171,6 +241,10 @@ int main(int argc, char **argv)
 		0);
 	eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
 
+	int res = gl3wInit();
+
+	printf("gl3winit: %d\n", res);
+
 	int majorVer;
 	int minorVer;
 
@@ -202,5 +276,5 @@ int main(int argc, char **argv)
 	wl_display_disconnect(display);
 	printf("disconnected from display\n");
 
-	exit(0);
+	return 0;
 }

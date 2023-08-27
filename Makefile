@@ -9,7 +9,7 @@ SOURCES=xdg-shell-protocol.c
 
 all: $(HEADERS) $(SOURCES)
 	gcc -o window window.c $(SOURCES) -I. -lwayland-client
-	gcc -o window_egl window_egl.c gl3w.c $(SOURCES) -I. -lwayland-client -lwayland-egl -lEGL -lGL
+	gcc -g -o window_egl window_egl.c gl3w.c $(SOURCES) -I. -lwayland-client -lwayland-egl -lEGL -lGL
 
 $(HEADERS):
 	$(WAYLAND_SCANNER) client-header $(XDG_SHELL_PROTOCOL) $@
