@@ -20,6 +20,8 @@ struct wl_seat *seat;
 struct wl_pointer *pointer;
 struct xdg_toplevel *toplevel;
 
+struct wl_egl_window *egl_window;
+
 bool waitForConfigure = true;
 
 const int WIDTH = 480;
@@ -150,6 +152,36 @@ static const struct wl_registry_listener registry_listener = {
 	global_registry_remover,
 };
 
+static void xdg_toplevel_handle_configure(void *data,
+		struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
+		struct wl_array *states) {
+
+	// no window geometry event, ignore
+	if(w == 0 && h == 0) return;
+
+	// window resized
+	wl_egl_window_resize(egl_window, w, h, 0, 0);
+	wl_surface_commit(surface);
+}
+
+static void xdg_toplevel_handle_close(void *data,
+		struct xdg_toplevel *xdg_toplevel) {
+	// window closed, be sure that this event gets processed
+}
+
+static void configure_bounds(void *data,
+				 struct xdg_toplevel *xdg_toplevel,
+				 int32_t width,
+				 int32_t height) {
+
+}
+
+struct xdg_toplevel_listener xdg_toplevel_listener = {
+	.configure = xdg_toplevel_handle_configure,
+	.close = xdg_toplevel_handle_close,
+	.configure_bounds = configure_bounds
+};
+
 int main(int argc, char **argv)
 {
 	
@@ -221,6 +253,10 @@ int main(int argc, char **argv)
 	}
 	// 窗口处理
 	toplevel = xdg_surface_get_toplevel(shell_surface);
+    xdg_toplevel_set_title(toplevel, "Wayland EGL example");
+	assert(toplevel);
+	xdg_toplevel_add_listener(toplevel, &xdg_toplevel_listener, NULL);
+
 	xdg_surface_add_listener(shell_surface, &surface_listener, NULL);
 
 	region = wl_compositor_create_region(compositor);
@@ -260,7 +296,7 @@ int main(int argc, char **argv)
 		context_attribs);
 
 	// init window
-	struct wl_egl_window *egl_window = wl_egl_window_create(surface, WIDTH, HEIGHT);
+	egl_window = wl_egl_window_create(surface, WIDTH, HEIGHT);
 	EGLSurface egl_surface = eglCreateWindowSurface(
 		egl_display,
 		egl_config,
