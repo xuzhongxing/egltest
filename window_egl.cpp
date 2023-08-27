@@ -295,8 +295,7 @@ int main(int argc, char **argv)
 	}
 std::cout << "get here" << std::endl;
     int frame = 0;
-	// 窗口循环直到关闭
-/*
+
 	while (true)
 	{
 
@@ -323,17 +322,17 @@ std::cout << "get here" << std::endl;
 
 		std::cout << frame++ << std::endl;
 
-		if (false) {
+		if (clicked) {
 			clicked = false;
 		    glClearColor(1, 1, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 		    eglSwapBuffers(egl_display, egl_surface);
 		}
 	}
-	*/
+	
 
-	while (wl_display_dispatch(display))
-	    ;
+	//while (wl_display_dispatch(display))
+	 //   ;
 
 	xdg_surface_destroy(shell_surface);
 	xdg_wm_base_destroy(xdg_shell);
