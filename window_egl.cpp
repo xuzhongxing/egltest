@@ -5,7 +5,10 @@
 #include <wayland-egl.h>
 #include <EGL/egl.h>
 #include "GL/gl3w.h"
+#include <poll.h>
 #include <linux/input.h>
+#include <iostream>
+#include <cassert>
 
 #include "xdg-shell-client-protocol.h"
 
@@ -71,6 +74,7 @@ static const struct wl_pointer_listener pointer_listener = {
 
 static void
 seat_handle_capabilities(void *data, struct wl_seat *seat, uint32_t caps) {
+	
 	if ((caps & WL_SEAT_CAPABILITY_POINTER) && !pointer)
 	{
 		pointer = wl_seat_get_pointer(seat);
@@ -78,9 +82,8 @@ seat_handle_capabilities(void *data, struct wl_seat *seat, uint32_t caps) {
 	}
 	else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && pointer)
 	{
-		wl_pointer_destroy(pointer);
-		pointer = NULL;
 	}
+	
 }
 
 static const struct wl_seat_listener seat_listener = {
@@ -140,6 +143,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	printf("connected to display\n");
+
+	int m_fd = wl_display_get_fd(display);
+	std::cout << "fd: " << m_fd << std::endl;
 
 	struct wl_registry *registry = wl_display_get_registry(display);
 	if (!registry)
@@ -263,10 +269,43 @@ int main(int argc, char **argv)
 
 	eglSwapBuffers(egl_display, egl_surface);
 
+	while (waitForConfigure) {
+		std::cout << "wait for configure" << std::endl;
+		auto ret = wl_display_dispatch(display);
+	}
+std::cout << "get here" << std::endl;
+    int frame = 0;
 	// 窗口循环直到关闭
-	while (wl_display_dispatch(display) != -1)
+
+	while (true)
 	{
-		;
+
+        while (true) {
+		    int r = wl_display_dispatch_pending(display);
+
+			std::cout << "dispatch: " << r << std::endl;
+
+			assert(r>=0);
+
+			wl_display_flush(display);
+			//wl_display_sync(display);
+
+			if (wl_display_prepare_read(display) == 0)
+			    break;
+		}
+
+		pollfd fds[1] = {{m_fd, POLLIN, 0}};
+		std::cout << "begin polling " << std::endl;
+		int r = poll(fds, 1, 60000);
+		std::cout << "poll: " << r << std::endl;
+		assert(fds[0].revents & POLLIN);
+		
+		wl_display_read_events(display); 
+
+		std::cout << frame++ << std::endl;
+
+		//glClearColor(1, 1, 0.0f, 1.0f);
+		//eglSwapBuffers(egl_display, egl_surface);
 	}
 
 	xdg_surface_destroy(shell_surface);
