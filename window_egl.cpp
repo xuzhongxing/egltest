@@ -25,6 +25,8 @@ bool waitForConfigure = true;
 const int WIDTH = 480;
 const int HEIGHT = 360;
 
+bool clicked = false;
+
 static void
 pointer_handle_enter(void *data, struct wl_pointer *pointer,
 					 uint32_t serial, struct wl_surface *surface,
@@ -52,6 +54,7 @@ pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
 					  uint32_t serial, uint32_t time, uint32_t button,
 					  uint32_t state)
 {
+	clicked = true;
 	printf("Pointer button\n");
 	if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED)
 		xdg_toplevel_move(toplevel, seat, serial);
@@ -93,11 +96,26 @@ static const struct wl_seat_listener seat_listener = {
 static void handle_configure(void *data, struct xdg_surface *surface, uint32_t serial)
 {
 	xdg_surface_ack_configure(surface, serial);
+
+	std::cout << "handle configure" << std::endl;
+
 	waitForConfigure = false;
 }
 
 static const struct xdg_surface_listener surface_listener = {
 	.configure = handle_configure};
+
+
+static void
+xdg_wm_base_ping(void *data, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
+{
+    xdg_wm_base_pong(xdg_wm_base, serial);
+	std::cout << "pong" << std::endl;
+}
+
+static const struct xdg_wm_base_listener xdg_wm_base_listener = {
+    .ping = xdg_wm_base_ping,
+};
 
 static void
 global_registry_handler(void *data, struct wl_registry *registry,
@@ -111,6 +129,7 @@ global_registry_handler(void *data, struct wl_registry *registry,
 	else if (strcmp(interface, xdg_wm_base_interface.name) == 0)
 	{
 		xdg_shell = (struct xdg_wm_base *) wl_registry_bind(registry, id, &xdg_wm_base_interface, version);
+		xdg_wm_base_add_listener(xdg_shell, &xdg_wm_base_listener, data);
 	}
 	else if (strcmp(interface, "wl_seat") == 0)
 	{
@@ -189,6 +208,7 @@ int main(int argc, char **argv)
 	{
 		fprintf(stderr, "Found valid shell.\n");
 	}
+
 	struct xdg_surface *shell_surface = xdg_wm_base_get_xdg_surface(xdg_shell, surface);
 	if (shell_surface == NULL)
 	{
@@ -264,7 +284,7 @@ int main(int argc, char **argv)
 	const char* v = (const char*) glGetString(GL_VERSION);
 	printf("gl version: %s\n", v);
 
-	glClearColor(1, 1, 0.0f, 1.0f);
+	glClearColor(1, 0, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	eglSwapBuffers(egl_display, egl_surface);
@@ -276,7 +296,7 @@ int main(int argc, char **argv)
 std::cout << "get here" << std::endl;
     int frame = 0;
 	// 窗口循环直到关闭
-
+/*
 	while (true)
 	{
 
@@ -288,7 +308,6 @@ std::cout << "get here" << std::endl;
 			assert(r>=0);
 
 			wl_display_flush(display);
-			//wl_display_sync(display);
 
 			if (wl_display_prepare_read(display) == 0)
 			    break;
@@ -296,7 +315,7 @@ std::cout << "get here" << std::endl;
 
 		pollfd fds[1] = {{m_fd, POLLIN, 0}};
 		std::cout << "begin polling " << std::endl;
-		int r = poll(fds, 1, 60000);
+		int r = poll(fds, 1, -1);
 		std::cout << "poll: " << r << std::endl;
 		assert(fds[0].revents & POLLIN);
 		
@@ -304,9 +323,17 @@ std::cout << "get here" << std::endl;
 
 		std::cout << frame++ << std::endl;
 
-		//glClearColor(1, 1, 0.0f, 1.0f);
-		//eglSwapBuffers(egl_display, egl_surface);
+		if (false) {
+			clicked = false;
+		    glClearColor(1, 1, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+		    eglSwapBuffers(egl_display, egl_surface);
+		}
 	}
+	*/
+
+	while (wl_display_dispatch(display))
+	    ;
 
 	xdg_surface_destroy(shell_surface);
 	xdg_wm_base_destroy(xdg_shell);
