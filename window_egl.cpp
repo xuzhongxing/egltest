@@ -5,6 +5,7 @@
 #include <wayland-egl.h>
 #include <EGL/egl.h>
 #include "GL/gl3w.h"
+#include <linux/input.h>
 
 #include "xdg-shell-client-protocol.h"
 
@@ -15,6 +16,8 @@ struct wl_surface *surface = NULL;
 struct wl_seat *seat;
 struct wl_pointer *pointer;
 struct xdg_toplevel *toplevel;
+
+bool waitForConfigure = true;
 
 const int WIDTH = 480;
 const int HEIGHT = 360;
@@ -47,8 +50,8 @@ pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
 					  uint32_t state)
 {
 	printf("Pointer button\n");
-	//if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED)
-	//	xdg_toplevel_move(toplevel, seat, serial);
+	if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED)
+		xdg_toplevel_move(toplevel, seat, serial);
 }
 
 static void
@@ -67,9 +70,7 @@ static const struct wl_pointer_listener pointer_listener = {
 };
 
 static void
-seat_handle_capabilities(void *data, struct wl_seat *seat,
-						 enum wl_seat_capability caps)
-{
+seat_handle_capabilities(void *data, struct wl_seat *seat, uint32_t caps) {
 	if ((caps & WL_SEAT_CAPABILITY_POINTER) && !pointer)
 	{
 		pointer = wl_seat_get_pointer(seat);
@@ -86,10 +87,10 @@ static const struct wl_seat_listener seat_listener = {
 	seat_handle_capabilities,
 };
 
-
 static void handle_configure(void *data, struct xdg_surface *surface, uint32_t serial)
 {
 	xdg_surface_ack_configure(surface, serial);
+	waitForConfigure = false;
 }
 
 static const struct xdg_surface_listener surface_listener = {
@@ -102,15 +103,15 @@ global_registry_handler(void *data, struct wl_registry *registry,
 	printf("Got a registry event for %s id %d\n", interface, id);
 	if (strcmp(interface, "wl_compositor") == 0)
 	{
-		compositor = wl_registry_bind(registry, id, &wl_compositor_interface, version);
+		compositor = (struct wl_compositor *) wl_registry_bind(registry, id, &wl_compositor_interface, version);
 	}
 	else if (strcmp(interface, xdg_wm_base_interface.name) == 0)
 	{
-		xdg_shell = wl_registry_bind(registry, id, &xdg_wm_base_interface, version);
+		xdg_shell = (struct xdg_wm_base *) wl_registry_bind(registry, id, &xdg_wm_base_interface, version);
 	}
 	else if (strcmp(interface, "wl_seat") == 0)
 	{
-		seat = wl_registry_bind(registry, id, &wl_seat_interface, 1);
+		seat = (struct wl_seat *) wl_registry_bind(registry, id, &wl_seat_interface, 1);
 		wl_seat_add_listener(seat, &seat_listener, NULL);
 	}
 }
@@ -248,13 +249,13 @@ int main(int argc, char **argv)
 	int majorVer;
 	int minorVer;
 
-	const char* ven = glGetString(GL_VENDOR);
+	const char* ven = (const char*) glGetString(GL_VENDOR);
 	printf("gl vendor: %s\n", ven);
 
-	const char* r = glGetString(GL_RENDERER);
+	const char* r = (const char*) glGetString(GL_RENDERER);
 	printf("gl renderer: %s\n", r);
 
-	const char* v = glGetString(GL_VERSION);
+	const char* v = (const char*) glGetString(GL_VERSION);
 	printf("gl version: %s\n", v);
 
 	glClearColor(1, 1, 0.0f, 1.0f);
