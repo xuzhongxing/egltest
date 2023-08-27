@@ -48,7 +48,6 @@ static void
 pointer_handle_motion(void *data, struct wl_pointer *pointer,
 					  uint32_t time, wl_fixed_t sx, wl_fixed_t sy)
 {
-	printf("Pointer moved at %f %f\n", wl_fixed_to_double(sx), wl_fixed_to_double(sy));
 }
 
 static void
@@ -112,7 +111,6 @@ static void
 xdg_wm_base_ping(void *data, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
 {
     xdg_wm_base_pong(xdg_wm_base, serial);
-	std::cout << "pong" << std::endl;
 }
 
 static const struct xdg_wm_base_listener xdg_wm_base_listener = {
@@ -156,12 +154,14 @@ static void xdg_toplevel_handle_configure(void *data,
 		struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
 		struct wl_array *states) {
 
+	std::cout << "xdg_toplevel_handle_configure" << std::endl;
+
 	// no window geometry event, ignore
 	if(w == 0 && h == 0) return;
 
 	// window resized
 	wl_egl_window_resize(egl_window, w, h, 0, 0);
-	wl_surface_commit(surface);
+	//wl_surface_commit(surface);
 }
 
 static void xdg_toplevel_handle_close(void *data,
@@ -329,7 +329,6 @@ int main(int argc, char **argv)
 		std::cout << "wait for configure" << std::endl;
 		auto ret = wl_display_dispatch(display);
 	}
-std::cout << "get here" << std::endl;
     int frame = 0;
 
 	while (true)
@@ -337,8 +336,6 @@ std::cout << "get here" << std::endl;
 
         while (true) {
 		    int r = wl_display_dispatch_pending(display);
-
-			std::cout << "dispatch: " << r << std::endl;
 
 			assert(r>=0);
 
@@ -349,14 +346,10 @@ std::cout << "get here" << std::endl;
 		}
 
 		pollfd fds[1] = {{m_fd, POLLIN, 0}};
-		std::cout << "begin polling " << std::endl;
 		int r = poll(fds, 1, -1);
-		std::cout << "poll: " << r << std::endl;
 		assert(fds[0].revents & POLLIN);
 		
 		wl_display_read_events(display); 
-
-		std::cout << frame++ << std::endl;
 
 		if (clicked) {
 			clicked = false;
