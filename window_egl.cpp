@@ -22,6 +22,10 @@ struct xdg_toplevel *toplevel;
 
 struct wl_egl_window *egl_window;
 
+EGLSurface egl_surface;
+EGLContext egl_context;
+EGLDisplay egl_display;
+
 bool waitForConfigure = true;
 
 const int WIDTH = 480;
@@ -57,8 +61,8 @@ pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
 {
 	clicked = true;
 	printf("Pointer button\n");
-	if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED)
-		xdg_toplevel_move(toplevel, seat, serial);
+	//if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED)
+	//	xdg_toplevel_move(toplevel, seat, serial);
 }
 
 static void
@@ -154,13 +158,17 @@ static void xdg_toplevel_handle_configure(void *data,
 		struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
 		struct wl_array *states) {
 
-	std::cout << "xdg_toplevel_handle_configure" << std::endl;
+	std::cout << "xdg_toplevel_handle_configure: " << w << " " << h << std::endl;
 
 	// no window geometry event, ignore
 	if(w == 0 && h == 0) return;
 
 	// window resized
 	wl_egl_window_resize(egl_window, w, h, 0, 0);
+
+	glClearColor(1, 1, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	eglSwapBuffers(egl_display, egl_surface);
 
 	// Need to create a new egl surface?
 
@@ -262,6 +270,10 @@ int main(int argc, char **argv)
 
 	xdg_surface_add_listener(shell_surface, &surface_listener, NULL);
 
+	xdg_toplevel_set_fullscreen(toplevel, NULL);
+	wl_surface_commit(surface);
+	wl_display_flush(display);
+
 	region = wl_compositor_create_region(compositor);
 	wl_region_add(region, 0, 0, WIDTH, HEIGHT);
 	wl_surface_set_opaque_region(surface, region);
@@ -282,7 +294,7 @@ int main(int argc, char **argv)
 
 	EGLConfig egl_config;
 
-	EGLDisplay egl_display = eglGetDisplay((EGLNativeDisplayType)display);
+	egl_display = eglGetDisplay((EGLNativeDisplayType)display);
 	eglInitialize(egl_display, &major, &minor);
 	printf("EGL major: %d, minor %d\n", major, minor);
 	eglGetConfigs(egl_display, 0, 0, &config_count);
@@ -292,7 +304,7 @@ int main(int argc, char **argv)
 	// This is important. Without this GLES will be chosen.
     eglBindAPI(EGL_OPENGL_API);
 
-	EGLContext egl_context = eglCreateContext(
+	egl_context = eglCreateContext(
 		egl_display,
 		egl_config,
 		EGL_NO_CONTEXT,
@@ -300,7 +312,7 @@ int main(int argc, char **argv)
 
 	// init window
 	egl_window = wl_egl_window_create(surface, WIDTH, HEIGHT);
-	EGLSurface egl_surface = eglCreateWindowSurface(
+	egl_surface = eglCreateWindowSurface(
 		egl_display,
 		egl_config,
 		egl_window,
@@ -327,6 +339,8 @@ int main(int argc, char **argv)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	eglSwapBuffers(egl_display, egl_surface);
+
+	
 
 	while (waitForConfigure) {
 		std::cout << "wait for configure" << std::endl;
@@ -361,7 +375,6 @@ int main(int argc, char **argv)
 		    eglSwapBuffers(egl_display, egl_surface);
 		}
 	}
-	
 
 	//while (wl_display_dispatch(display))
 	 //   ;
