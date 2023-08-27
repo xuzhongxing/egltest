@@ -161,6 +161,9 @@ static void xdg_toplevel_handle_configure(void *data,
 
 	// window resized
 	wl_egl_window_resize(egl_window, w, h, 0, 0);
+
+	// Need to create a new egl surface?
+
 	//wl_surface_commit(surface);
 }
 
