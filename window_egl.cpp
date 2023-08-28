@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 
 	xdg_surface_add_listener(shell_surface, &surface_listener, NULL);
 
-	xdg_toplevel_set_fullscreen(toplevel, NULL);
+	
 
 	region = wl_compositor_create_region(compositor);
 	wl_region_add(region, 0, 0, WIDTH, HEIGHT);
@@ -333,6 +333,9 @@ int main(int argc, char **argv)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	eglSwapBuffers(egl_display, egl_surface);
+
+	xdg_toplevel_set_fullscreen(toplevel, NULL);
+	wl_display_flush(display);
 
 	while (waitForConfigure) {
 		std::cout << "wait for configure" << std::endl;
