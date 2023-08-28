@@ -169,10 +169,6 @@ static void xdg_toplevel_handle_configure(void *data,
 	glClearColor(1, 1, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	eglSwapBuffers(egl_display, egl_surface);
-
-	// Need to create a new egl surface?
-
-	//wl_surface_commit(surface);
 }
 
 static void xdg_toplevel_handle_close(void *data,
@@ -271,8 +267,6 @@ int main(int argc, char **argv)
 	xdg_surface_add_listener(shell_surface, &surface_listener, NULL);
 
 	xdg_toplevel_set_fullscreen(toplevel, NULL);
-	//wl_surface_commit(surface);
-	//wl_display_flush(display);
 
 	region = wl_compositor_create_region(compositor);
 	wl_region_add(region, 0, 0, WIDTH, HEIGHT);
@@ -339,8 +333,6 @@ int main(int argc, char **argv)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	eglSwapBuffers(egl_display, egl_surface);
-
-	
 
 	while (waitForConfigure) {
 		std::cout << "wait for configure" << std::endl;
