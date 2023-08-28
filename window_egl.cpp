@@ -271,8 +271,8 @@ int main(int argc, char **argv)
 	xdg_surface_add_listener(shell_surface, &surface_listener, NULL);
 
 	xdg_toplevel_set_fullscreen(toplevel, NULL);
-	wl_surface_commit(surface);
-	wl_display_flush(display);
+	//wl_surface_commit(surface);
+	//wl_display_flush(display);
 
 	region = wl_compositor_create_region(compositor);
 	wl_region_add(region, 0, 0, WIDTH, HEIGHT);
