@@ -28,7 +28,8 @@ int main(int argc, char **argv)
 
 	//xdgCtx->setFullscreen();
 
-	xdgCtx->waitForConfigure();
+	// This is optional.
+	//xdgCtx->waitForConfigure();
 
 	wlCtx->run();
 
