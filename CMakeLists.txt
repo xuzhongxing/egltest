@@ -6,7 +6,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 add_compile_options(-g)
 
-add_executable(windowegl window_egl.cpp gl3w.c xdg-shell-protocol.c)
+add_executable(windowegl window_egl.cpp WaylandContext.cpp XDGContext.cpp EGLWaylandContext.cpp gl3w.c xdg-shell-protocol.c)
 
 target_link_libraries(windowegl wayland-client wayland-egl EGL GL)
 
