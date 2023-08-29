@@ -111,7 +111,8 @@ void WaylandContext::init() {
 
 	wl_registry_add_listener(registry, &registry_listener, nullptr);
 
-    wl_display_roundtrip(display);
+	wl_display_dispatch(display);
+	wl_display_roundtrip(display);
 
     assert(compositor);
 
