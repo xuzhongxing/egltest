@@ -119,9 +119,12 @@ void WaylandContext::init() {
     surface = wl_compositor_create_surface(compositor);
     assert(surface);
 
+	// region用来告诉compositor哪些区域不透明，以及哪里接受输入，不是必须的。
+	/*
   	region = wl_compositor_create_region(compositor);
 	wl_region_add(region, 0, 0, 100, 100);
 	wl_surface_set_opaque_region(surface, region);
+	*/
 }
 
 void WaylandContext::run() {

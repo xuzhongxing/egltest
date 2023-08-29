@@ -1,0 +1,6 @@
+dri2_wl_swap_buffers_with_damage
+  => update_buffers_if_needed
+    => update_buffers
+      => get_back_bo
+        => create_dri_image_from_dmabuf_feedback
+          => loader_dri_create_image
