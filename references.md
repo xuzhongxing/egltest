@@ -4,7 +4,10 @@ https://jan.newmarch.name/Wayland/index.html
 
 https://wayland-book.com/
 
+https://emersion.fr/blog/2018/wayland-rendering-loop/
+
 https://feater.top/wayland/wayland-learning-indexes
+
 https://github.com/JackeyLea/Wayland_Freshman
 
 https://wayland.app/protocols/
