@@ -32,5 +32,4 @@ public:
     }
 
     void run();
-
 };

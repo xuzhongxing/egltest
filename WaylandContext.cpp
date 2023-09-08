@@ -1,6 +1,10 @@
 #include "WaylandContext.h"
+#include "EGLWaylandContext.h"
 #include "XDGContext.h"
 #include "xdg-shell-client-protocol.h"
+#include "GL/gl3w.h"
+#include <EGL/egl.h>
+
 #include <cstring>
 #include <poll.h>
 #include <iostream>
@@ -9,6 +13,7 @@
 
 extern WaylandContext* wlCtx;
 extern XDGContext* xdgCtx;
+extern EGLWaylandContext* eglCtx;
 
 static void pointer_handle_enter(void *data, struct wl_pointer *pointer,
 					 uint32_t serial, struct wl_surface *surface,
@@ -96,6 +101,30 @@ static const wl_registry_listener registry_listener = {
 	global_registry_remover,
 };
 
+void Render(void);
+
+static void frame_handle_done(void *data, struct wl_callback *callback, uint32_t time) {
+	wl_callback_destroy(callback);
+	Render();
+}
+
+const struct wl_callback_listener frame_listener = {
+	.done = frame_handle_done,
+};
+
+void Render(void) {
+
+	std::cout << "Render" << std::endl;
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	eglSwapInterval(eglCtx->display, 0);
+	struct wl_callback *callback = wl_surface_frame(wlCtx->surface);
+	wl_callback_add_listener(callback, &frame_listener, NULL);
+
+	// This call won't block
+	eglSwapBuffers(eglCtx->display, eglCtx->surface);
+}
+
 void WaylandContext::init() {
     std:: cout << "XDG_RUNTIME_DIR: " << getenv("XDG_RUNTIME_DIR") << "\n";
 
@@ -129,6 +158,10 @@ void WaylandContext::init() {
 
 void WaylandContext::run() {
     std::cout << "Start run" << std::endl;
+
+	struct wl_callback *callback = wl_surface_frame(surface);
+	wl_callback_add_listener(callback, &frame_listener, NULL);
+
     while (true) {
         while (true) {
 		    int r = wl_display_dispatch_pending(display);
