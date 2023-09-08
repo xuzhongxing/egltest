@@ -104,6 +104,7 @@ static const wl_registry_listener registry_listener = {
 void Render(void);
 
 static void frame_handle_done(void *data, struct wl_callback *callback, uint32_t time) {
+	std::cout << "frame time: " << time << std::endl;
 	wl_callback_destroy(callback);
 	Render();
 }
